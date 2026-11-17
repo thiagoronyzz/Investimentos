@@ -58,6 +58,7 @@ function render(data){
  $('price-assessment').textContent=`Projeção de preço: nos testes, o erro médio de retorno foi ${pct(m.price_mae)}; o modelo ${better} a hipótese de preço inalterado (erro de ${pct(m.price_baseline_mae)}). Estes erros são em pontos percentuais do preço de referência, não garantia para o futuro.`;
  const tbody=$('calibration');tbody.replaceChildren();for(const b of m.bins){const tr=document.createElement('tr');for(const val of [`${b.min}% a ${b.max}%`,b.count,pct(b.predicted),pct(b.observed)]){const td=document.createElement('td');td.textContent=val;tr.append(td);}tbody.append(tr);}
  document.querySelectorAll('[data-days]').forEach(b=>b.classList.toggle('active',b.dataset.days==='252'));drawChart(252);
+ if(window.AcaoClaraQuant && data.symbol) window.AcaoClaraQuant.start(data.symbol, data.name);
 }
 function drawChart(days){
  if(!currentResult)return;

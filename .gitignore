@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Estado gerado em tempo de execução (banco de previsões e cache de fontes)
+acao-clara/runtime/
+acao-clara-vercel/runtime/
+
+# Sistema / editores
+.DS_Store

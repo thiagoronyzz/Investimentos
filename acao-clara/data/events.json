@@ -1,0 +1,18 @@
+{
+  "comment": "Livro de eventos classificados manualmente (Núcleo 04). A classificação automática por manchetes usa data/event_rules.json; este arquivo permite registrar eventos com atributos revisados por uma pessoa, que têm prioridade sobre a classificação automática. Deixe a lista vazia se não quiser usar eventos manuais — o motor continua funcionando apenas com a classificação por regras.",
+  "schema": {
+    "id": "identificador único",
+    "date": "AAAA-MM-DD em que o evento se tornou público",
+    "type": "um dos tipos de data/event_rules.json (opcional se direction e intensity forem informados)",
+    "title": "descrição curta",
+    "direction": "1 (positivo), -1 (negativo) ou 0 (neutro)",
+    "intensity": "0 a 10",
+    "sectors": "lista de setores afetados (opcional; aceita '*')",
+    "tickers": "lista de códigos afetados, sem sufixo (opcional)",
+    "horizon_days": "horizonte em que o efeito se materializa",
+    "certainty": "0 a 1, grau de certeza sobre o desdobramento",
+    "priced_in": "0 a 1, parcela já refletida no preço",
+    "valid_until": "AAAA-MM-DD em que o efeito deixa de ser relevante (opcional)"
+  },
+  "events": []
+}

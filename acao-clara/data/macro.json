@@ -1,0 +1,133 @@
+{
+  "comment": "Séries macroeconômicas usadas pelo Núcleo 01. Em `bcb`, cada indicador lista candidatos: o motor consulta os metadados de cada série e usa a primeira cujo nome contenha as palavras-chave esperadas. Se nenhuma conferir, a série é usada sem verificação e o motor avisa — nunca se assume que um código corresponde ao indicador desejado.",
+  "bcb": [
+    {
+      "key": "selic",
+      "label": "Taxa Selic",
+      "unit": "% a.a.",
+      "sign": -1,
+      "candidates": [
+        { "id": 4389, "expect": ["selic"] },
+        { "id": 432, "expect": ["selic"] },
+        { "id": 1178, "expect": ["selic"] },
+        { "id": 11, "expect": ["selic"] }
+      ]
+    },
+    {
+      "key": "ipca_12m",
+      "label": "IPCA acumulado 12 meses",
+      "unit": "% a.a.",
+      "sign": -1,
+      "candidates": [
+        { "id": 13522, "expect": ["ipca"] },
+        { "id": 433, "expect": ["ipca"] },
+        { "id": 1619, "expect": ["ipca"] }
+      ]
+    },
+    {
+      "key": "ipca_m",
+      "label": "IPCA variação mensal",
+      "unit": "% no mês",
+      "sign": -1,
+      "candidates": [
+        { "id": 433, "expect": ["ipca"] },
+        { "id": 11, "expect": ["ipca"] }
+      ]
+    },
+    {
+      "key": "usdbrl_bcb",
+      "label": "Dólar (venda)",
+      "unit": "R$/US$",
+      "sign": 0,
+      "candidates": [
+        { "id": 1, "expect": ["dólar", "dolar", "câmbio", "cambio"] },
+        { "id": 1081, "expect": ["dólar", "dolar"] }
+      ]
+    },
+    {
+      "key": "pib",
+      "label": "PIB",
+      "unit": "% a.a.",
+      "sign": 1,
+      "candidates": [
+        { "id": 7336, "expect": ["pib", "produto interno"] },
+        { "id": 596, "expect": ["pib", "produto interno"] },
+        { "id": 4380, "expect": ["pib", "produto interno"] },
+        { "id": 24364, "expect": ["pib", "produto interno"] }
+      ]
+    },
+    {
+      "key": "desemprego",
+      "label": "Taxa de desocupação",
+      "unit": "%",
+      "sign": -1,
+      "candidates": [
+        { "id": 24364, "expect": ["desocup", "desemprego"] },
+        { "id": 19278, "expect": ["desocup", "desemprego"] },
+        { "id": 25117, "expect": ["desocup", "desemprego"] }
+      ]
+    },
+    {
+      "key": "divida_pib",
+      "label": "Dívida bruta do governo geral / PIB",
+      "unit": "% do PIB",
+      "sign": -1,
+      "candidates": [
+        { "id": 16466, "expect": ["dívida bruta", "divida bruta"] },
+        { "id": 4568, "expect": ["dívida", "divida"] }
+      ]
+    },
+    {
+      "key": "igpm_12m",
+      "label": "IGP-M acumulado 12 meses",
+      "unit": "% a.a.",
+      "sign": -1,
+      "candidates": [
+        { "id": 18186, "expect": ["igp"] },
+        { "id": 13521, "expect": ["igp"] }
+      ]
+    },
+    {
+      "key": "credito",
+      "label": "Concessões de crédito",
+      "unit": "R$ milhões",
+      "sign": 1,
+      "candidates": [
+        { "id": 20591, "expect": ["crédito", "credito", "concess"] },
+        { "id": 20579, "expect": ["crédito", "credito", "concess"] }
+      ]
+    },
+    {
+      "key": "confianca_consumidor",
+      "label": "Confiança do consumidor",
+      "unit": "índice",
+      "sign": 1,
+      "candidates": [
+        { "id": 4395, "expect": ["confiança do consumidor", "consumidor"] },
+        { "id": 4396, "expect": ["confiança", "consumidor"] }
+      ]
+    }
+  ],
+  "fred": [
+    { "id": "FEDFUNDS", "key": "fedfunds", "label": "Federal funds rate", "unit": "% a.a.", "sign": -1 },
+    { "id": "DGS10", "key": "us10y", "label": "Juros 10 anos EUA", "unit": "% a.a.", "sign": -1 },
+    { "id": "T10Y2Y", "key": "us_curve", "label": "Curva de juros EUA (10a - 2a)", "unit": "p.p.", "sign": 1 },
+    { "id": "CPIAUCSL", "key": "us_cpi_index", "label": "CPI EUA (índice)", "unit": "índice", "sign": -1, "transform": "yoy" },
+    { "id": "UNRATE", "key": "us_unemp", "label": "Desemprego EUA", "unit": "%", "sign": -1 },
+    { "id": "DTWEXBGS", "key": "dxy_broad", "label": "Índice amplo do dólar", "unit": "índice", "sign": -1 },
+    { "id": "T10YIE", "key": "us_breakeven", "label": "Expectativa de inflação 10 anos EUA", "unit": "% a.a.", "sign": -1 },
+    { "id": "INDPRO", "key": "us_indpro", "label": "Produção industrial EUA", "unit": "índice", "sign": 1 },
+    { "id": "UMCSENT", "key": "us_sentiment", "label": "Confiança do consumidor EUA", "unit": "índice", "sign": 1 }
+  ],
+  "yahoo": [
+    { "symbol": "^BVSP", "key": "ibov", "label": "Ibovespa", "unit": "pontos", "sign": 1 },
+    { "symbol": "BRL=X", "key": "usdbrl", "label": "Dólar (USD/BRL)", "unit": "R$/US$", "sign": 0 },
+    { "symbol": "CL=F", "key": "oil_wti", "label": "Petróleo WTI", "unit": "US$/barril", "sign": 0 },
+    { "symbol": "HG=F", "key": "copper", "label": "Cobre", "unit": "US$/lb", "sign": 0 },
+    { "symbol": "GC=F", "key": "gold", "label": "Ouro", "unit": "US$/onça", "sign": 0 },
+    { "symbol": "^TNX", "key": "us10y_yahoo", "label": "Juros 10 anos EUA (fonte Yahoo)", "unit": "% x10", "sign": -1 },
+    { "symbol": "^VIX", "key": "vix", "label": "VIX", "unit": "pontos", "sign": -1 },
+    { "symbol": "^GSPC", "key": "sp500", "label": "S&P 500", "unit": "pontos", "sign": 1 },
+    { "symbol": "000001.SS", "key": "china", "label": "Bolsa de Xangai", "unit": "pontos", "sign": 0 }
+  ]
+}

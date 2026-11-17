@@ -1,32 +1,73 @@
 # Ação Clara
 
-Protótipo educacional para analisar ações brasileiras a partir de preços históricos. Não é recomendação de investimento.
+Ferramenta educacional para analisar ações brasileiras: projeções de preço, faixa
+esperada, probabilidades, cenários e risco, sem recomendação de investimento.
+
+## Estrutura do repositório
+
+| Pasta | Conteúdo |
+| --- | --- |
+| `acao-clara/` | **Aplicação completa.** Servidor local (`app.py`, `http.server`), motor quantitativo (`engine/`), dados de apoio (`data/`), frontend (`static/`) e testes (`tests/`) |
+| `acao-clara-vercel/` | Mesmo código empacotado para a Vercel: aplicação Flask (`app.py`), frontend em `public/`, e `static/` para o servidor local |
+| `tools/sync-vercel.sh` | Copia `engine/`, `data/`, `server_core.py`, `static/`, `tests/` e `requirements.txt` de `acao-clara/` para `acao-clara-vercel/` |
+| `app.py` (raiz) | Atalho: executa a aplicação de `acao-clara/` |
+
+`server_core.py` concentra a lógica clássica (busca, histórico, regressão
+logística e Ridge, ranking) e é compartilhada pelas duas versões; cada `app.py`
+só expõe essa lógica no seu próprio servidor.
 
 ## Executar
 
-Requer Python 3.10+ e acesso à internet.
+Requer Python 3.10+ e acesso à internet:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
+pip install -r acao-clara/requirements.txt
+cd acao-clara && python app.py
 ```
 
 Abra http://localhost:8000. Para trocar a porta, defina a variável `PORT`.
+`python app.py` na raiz do repositório abre a mesma aplicação.
 
-## Fonte e limitações
+Sem internet, rode em modo demonstração com séries sintéticas determinísticas:
 
-Pesquisa e histórico diário obtidos dos endpoints públicos não oficiais do Yahoo Finance. Disponibilidade, abrangência, qualidade e continuidade não são garantidas; sujeito aos termos do Yahoo Finance e a restrições de licença ou uso comercial — verifique antes de publicar ou comercializar. O histórico usa o campo `adjclose` fornecido pelo Yahoo, normalmente ajustado para dividendos e desdobramentos segundo a metodologia da fonte; não há verificação independente desses ajustes. Caso não exista, a análise é recusada. O dia corrente é excluído para evitar o uso de uma cotação ainda em formação. A fonte pode sofrer atrasos ou revisões.
+```bash
+ACAO_CLARA_DEMO=1 python acao-clara/app.py
+```
 
-## Método
+## O que o sistema faz
 
-Regressão logística padronizada com retornos de 5, 20 e 60 pregões, volatilidade de 20 e distância das médias de 20 e 60, calculados apenas com fechamento ajustado até a data de referência. O volume é obtido quando fornecido, mas não é utilizado pelo modelo. Rótulo de alta: fechamento ajustado futuro estritamente maior; igualdade é “não subiu”. Não são considerados fatores externos.
+1. **Análise clássica** — regressão logística para a probabilidade de alta e
+   regressão Ridge para o retorno esperado, com validação progressiva em quatro
+   blocos cronológicos (acerto direcional, Brier, calibração, erro absoluto
+   médio comparado à hipótese de preço constante).
+2. **Motor quantitativo de oito núcleos** — macroeconomia, fundamentos e
+   valuation (DCF + comps), interdependência entre mercados, eventos externos,
+   fluxo financeiro, modelagem estatística, cenários e risco, combinados em três
+   camadas (estimativas independentes → pesos dinâmicos → ajustes de risco) nos
+   horizontes de 7, 30, 90, 180 e 365 dias.
 
-Validação progressiva em quatro blocos cronológicos. Para cada bloco, o treino usa apenas amostras cujo rótulo já era conhecido antes do primeiro dia do bloco (expurgo do horizonte), sem atualização dentro do bloco. Métricas nas previsões fora da amostra: acerto direcional, Brier (quanto menor melhor), comparação com a frequência de alta do treino e tabela de calibração. Faixas têm amostras sobrepostas no tempo, portanto não devem ser tratadas como observações independentes. O modelo final usa todos os rótulos conhecidos até o último fechamento disponível; dados de teste não são usados para escolher hiperparâmetros. A validação descreve o passado e não garante o futuro. Sem simulação de compra/venda.
+A documentação completa do motor — núcleos, camadas, descoberta automática de
+variáveis, qualidade dos dados, aprendizado com os próprios erros, endpoints e
+variáveis de ambiente — está em [`acao-clara/README.md`](acao-clara/README.md).
 
 ## Testes
 
 ```bash
-python -m unittest discover -s tests
+cd acao-clara && python -m unittest discover -s tests
 ```
+
+## Fonte e limitações
+
+Pesquisa e histórico diário obtidos dos endpoints públicos não oficiais do Yahoo
+Finance; fundamentalos da brapi.dev; indicadores macro do BCB (SGS) e do FRED.
+Disponibilidade, abrangência, qualidade e continuidade não são garantidas; sujeito
+aos termos de cada provedor — verifique antes de publicar ou comercializar. O
+histórico usa o campo `adjclose` fornecido pela fonte, normalmente ajustado para
+dividendos e desdobramentos sem verificação independente. A fonte pode sofrer
+atrasos ou revisões.
+
+Este material é educacional e **não é recomendação de investimento**. Projeções
+são estimativas estatísticas construídas com dados públicos, podem errar e não
+garantem resultado futuro.

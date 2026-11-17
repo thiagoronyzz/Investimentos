@@ -1,0 +1,249 @@
+{
+  "comment": "Regras programadas de classificação de eventos (Núcleo 04). Nenhum modelo de IA é usado: a classificação é por correspondência de palavras-chave e a intensidade/direção vêm da tabela. `sectors` aceita '*' para todos os setores e nomes de setor conforme data/sectors.json; valores 1 (positivo), -1 (negativo) e 0 (neutro/indefinido). `priced_in` estima a parcela do efeito que o mercado costuma antecipar. `intensity` vai de 0 a 10.",
+  "impact_by_horizon": { "7": 0.12, "30": 0.20, "90": 0.30, "180": 0.35, "365": 0.38 },
+  "sector_terms": {
+    "Petróleo e gás": ["petróleo", "petroleo", "combustível", "combustivel", "gasolina", "diesel", "refino", "offshore", "pre-sal", "pré-sal"],
+    "Mineração": ["minério", "minerio", "mineração", "mineracao", "vale", "pelotas"],
+    "Siderurgia": ["aço", "aco", "siderúrgic", "siderurgic", "gusa", "placa de aço"],
+    "Bancos": ["banco", "bancári", "bancari", "crédito", "credito", "inadimplência", "inadimplencia"],
+    "Serviços financeiros": ["b3", "bolsa", "asset", "meios de pagamento"],
+    "Seguros": ["segurador", "resseguro", "sinistro", "previdência", "previdencia"],
+    "Bens industriais": ["industrial", "máquina", "maquina", "equipamento", "bens de capital", "defesa"],
+    "Energia elétrica": ["energia elétrica", "energia eletrica", "hidrelétrica", "hidreletrica", "transmissão", "transmissao", "distribuidora", "reservatório", "reservatorio", "chuvas"],
+    "Saneamento": ["saneamento", "água", "agua", "esgoto"],
+    "Shoppings e imóveis": ["shopping", "imobiliár", "imobiliari", "incorporador", "aluguel", "loteamento"],
+    "Varejo": ["varejo", "loja", "consumo", "supermercado", "ecommerce", "e-commerce", "marketplace"],
+    "Bebidas e alimentos": ["alimento", "bebida", "cerveja", "carne", "frango", "proteína", "proteina", "lácteo", "lacteo"],
+    "Papel e celulose": ["celulose", "papel", "embalagem"],
+    "Logística e transporte": ["logística", "logistica", "transporte", "rodovia", "ferrovia", "porto", "aviação", "aviacao", "aérea", "aerea", "frota"],
+    "Telecomunicações": ["telecom", "telefonia", "internet", "5g", "banda larga"],
+    "Tecnologia": ["software", "tecnologia", "nuvem", "inteligência artificial", "saas"],
+    "Saúde": ["saúde", "saude", "hospital", "plano de saúde", "farmác", "farmac", "medicamento"],
+    "Químicos": ["químico", "quimico", "petroquím", "petroquim", "fertilizante", "resina"],
+    "Educação": ["educação", "educacao", "universidade", "ensino", "mensalidade"],
+    "Agro e logística": ["agro", "safra", "soja", "milho", "grão", "grao"]
+  },
+  "types": {
+    "rate_cut": {
+      "label": "Redução de juros",
+      "keywords": ["corte de juros", "corta juros", "reduz juros", "redução da selic", "reducao da selic", "selic cai", "selic recua", "banco central reduz", "fed corta", "queda dos juros", "juros caem"],
+      "direction": 1,
+      "sectors": { "Varejo": 1, "Shoppings e imóveis": 1, "Educação": 1, "Logística e transporte": 1, "Tecnologia": 1, "Bancos": 0, "Energia elétrica": 1, "Saneamento": 1 },
+      "intensity": 7,
+      "horizon_days": 180,
+      "certainty": 0.7,
+      "priced_in": 0.5,
+      "note": "Juros menores reduzem o custo de capital e favorecem setores alavancados e de crescimento; bancos têm efeito ambíguo (menor spread, maior volume)."
+    },
+    "rate_hike": {
+      "label": "Aumento de juros",
+      "keywords": ["alta de juros", "aumenta juros", "eleva juros", "selic sobe", "selic avança", "selic avanca", "banco central eleva", "fed eleva", "aperto monetário", "aperto monetario", "juros sobem"],
+      "direction": -1,
+      "sectors": { "Varejo": -1, "Shoppings e imóveis": -1, "Educação": -1, "Tecnologia": -1, "Bancos": 1, "Energia elétrica": -1 },
+      "intensity": 7,
+      "horizon_days": 180,
+      "certainty": 0.7,
+      "priced_in": 0.5,
+      "note": "Custo de capital maior comprime valuation, especialmente em setores de duration longa."
+    },
+    "inflation_up": {
+      "label": "Inflação acima do esperado",
+      "keywords": ["inflação acelera", "inflacao acelera", "ipca acima", "inflação surpreende", "inflacao surpreende", "pressão inflacionária", "pressao inflacionaria", "cpi acima", "inflação sobe"],
+      "direction": -1,
+      "sectors": { "Bancos": -1, "Varejo": -1, "Saneamento": 1, "Energia elétrica": 1, "Logística e transporte": 1 },
+      "intensity": 6,
+      "horizon_days": 120,
+      "certainty": 0.6,
+      "priced_in": 0.4,
+      "note": "Pressiona custos e juros; setores com receita indexada podem se beneficiar."
+    },
+    "inflation_down": {
+      "label": "Inflação abaixo do esperado",
+      "keywords": ["inflação desacelera", "inflacao desacelera", "ipca abaixo", "inflação recua", "deflação", "deflacao", "cpi abaixo"],
+      "direction": 1,
+      "intensity": 5,
+      "horizon_days": 120,
+      "certainty": 0.6,
+      "priced_in": 0.4,
+      "note": "Abre espaço para juros menores."
+    },
+    "fiscal_risk": {
+      "label": "Risco fiscal",
+      "keywords": ["risco fiscal", "déficit", "deficit", "dívida pública", "divida publica", "meta fiscal", "gasto público", "gasto publico", "arcabouço", "arcabouco", "calote"],
+      "direction": -1,
+      "intensity": 8,
+      "horizon_days": 180,
+      "certainty": 0.55,
+      "priced_in": 0.3,
+      "note": "Eleva prêmio de risco, juros longos e câmbio."
+    },
+    "oil_up": {
+      "label": "Alta do petróleo",
+      "keywords": ["petróleo sobe", "petroleo sobe", "petróleo avança", "petroleo avanca", "barril em alta", "wti sobe", "brent sobe", "alta do petróleo", "alta do petroleo"],
+      "direction": 0,
+      "sectors": { "Petróleo e gás": 1, "Logística e transporte": -1, "Químicos": -1 },
+      "intensity": 6,
+      "horizon_days": 90,
+      "certainty": 0.65,
+      "priced_in": 0.5,
+      "note": "Favorável a produtores, negativo para consumidores de combustível."
+    },
+    "oil_down": {
+      "label": "Queda do petróleo",
+      "keywords": ["petróleo cai", "petroleo cai", "petróleo recua", "petroleo recua", "barril em queda", "wti cai", "brent cai", "queda do petróleo"],
+      "direction": 0,
+      "sectors": { "Petróleo e gás": -1, "Logística e transporte": 1, "Químicos": 1 },
+      "intensity": 6,
+      "horizon_days": 90,
+      "certainty": 0.65,
+      "priced_in": 0.5,
+      "note": "Reduz receita de produtores e custo de quem usa combustível como insumo."
+    },
+    "sanctions": {
+      "label": "Sanções e embargos",
+      "keywords": ["sanção", "sancao", "sanções", "sancoes", "embargo", "restrição à exportação", "restricao a exportacao"],
+      "direction": -1,
+      "sectors": { "Petróleo e gás": 1, "Mineração": 0, "Bebidas e alimentos": -1 },
+      "intensity": 8,
+      "horizon_days": 180,
+      "certainty": 0.5,
+      "priced_in": 0.2,
+      "note": "Reduz oferta do país sancionado e pode beneficiar concorrentes."
+    },
+    "tariffs": {
+      "label": "Tarifas de importação",
+      "keywords": ["tarifa de importação", "tarifa de importacao", "imposto de importação", "imposto de importacao", "sobretaxa", "protecionismo", "tarifa sobre o aço", "tarifa sobre aço"],
+      "direction": -1,
+      "sectors": { "Siderurgia": 1, "Mineração": 1, "Bens industriais": 1, "Varejo": -1, "Tecnologia": -1 },
+      "intensity": 7,
+      "horizon_days": 180,
+      "certainty": 0.55,
+      "priced_in": 0.3,
+      "note": "Protege produtores locais e encarece insumos importados."
+    },
+    "tax_change": {
+      "label": "Mudança tributária setorial",
+      "keywords": ["aumento de imposto", "elevação de imposto", "elevacao de imposto", "reforma tributária", "reforma tributaria", "tributação", "tributacao", "csll", "icms", "jcp"],
+      "direction": -1,
+      "intensity": 7,
+      "horizon_days": 270,
+      "certainty": 0.5,
+      "priced_in": 0.3,
+      "note": "Altera lucro líquido e fluxo de caixa; o sinal depende do setor atingido."
+    },
+    "commodity_china": {
+      "label": "Atividade na China",
+      "keywords": ["china", "estímulo chinês", "estimulo chines", "construção civil chinesa", "construcao civil chinesa", "pmi chinês", "pmi chines", "demanda chinesa"],
+      "direction": 0,
+      "sectors": { "Mineração": 1, "Siderurgia": 1, "Papel e celulose": 1, "Bebidas e alimentos": 1, "Agro e logística": 1 },
+      "intensity": 7,
+      "horizon_days": 180,
+      "certainty": 0.5,
+      "priced_in": 0.4,
+      "note": "Principal determinante de preço de commodities metálicas e agrícolas."
+    },
+    "geopolitics": {
+      "label": "Conflito geopolítico",
+      "keywords": ["guerra", "conflito", "invasão", "invasao", "ataque", "escalada", "geopolític", "geopolitic", "oriente médio", "oriente medio"],
+      "direction": -1,
+      "sectors": { "Petróleo e gás": 1, "Mineração": 1 },
+      "intensity": 8,
+      "horizon_days": 120,
+      "certainty": 0.4,
+      "priced_in": 0.2,
+      "note": "Aumenta aversão a risco e preços de energia; efeito setorial heterogêneo."
+    },
+    "election": {
+      "label": "Evento eleitoral",
+      "keywords": ["eleição", "eleicao", "pesquisa eleitoral", "candidato", "segundo turno", "votação", "votacao"],
+      "direction": 0,
+      "intensity": 4,
+      "horizon_days": 90,
+      "certainty": 0.4,
+      "priced_in": 0.4,
+      "note": "Eleva incerteza; a direção depende do resultado e não é presumida pelo motor."
+    },
+    "regulation": {
+      "label": "Mudança regulatória",
+      "keywords": ["regulação", "regulacao", "aneel", "anatel", "antt", "anvisa", "cade", "leilão", "leilao", "concessão", "concessao", "marco legal", "agência reguladora", "agencia reguladora"],
+      "direction": 0,
+      "sectors": { "Energia elétrica": 1, "Saneamento": 1, "Telecomunicações": 1, "Logística e transporte": 1, "Saúde": -1, "Bancos": -1 },
+      "intensity": 6,
+      "horizon_days": 270,
+      "certainty": 0.45,
+      "priced_in": 0.3,
+      "note": "Pode criar ou destruir valor conforme o desenho da regra."
+    },
+    "capital_return": {
+      "label": "Dividendos e recompra",
+      "keywords": ["dividendo", "juros sobre capital", "recompra de ações", "recompra de acoes", "provento", "remuneração ao acionista", "remuneracao ao acionista"],
+      "direction": 1,
+      "intensity": 5,
+      "horizon_days": 60,
+      "certainty": 0.75,
+      "priced_in": 0.6,
+      "note": "Sinal de geração de caixa; parte relevante costuma já estar no preço."
+    },
+    "operational_disruption": {
+      "label": "Interrupção operacional",
+      "keywords": ["greve", "paralisação", "paralisacao", "acidente", "rompimento", "incêndio", "incendio", "pane", "interrupção", "interrupcao", "desastre", "enchente", "seca"],
+      "direction": -1,
+      "intensity": 7,
+      "horizon_days": 90,
+      "certainty": 0.6,
+      "priced_in": 0.25,
+      "note": "Reduz produção/vendas e pode gerar passivos."
+    },
+    "management_change": {
+      "label": "Mudança de gestão",
+      "keywords": ["novo ceo", "renúncia", "renuncia", "troca de comando", "novo presidente", "conselho de administração", "conselho de administracao"],
+      "direction": 0,
+      "intensity": 4,
+      "horizon_days": 180,
+      "certainty": 0.35,
+      "priced_in": 0.3,
+      "note": "Efeito incerto: depende do histórico do executivo e do contexto."
+    },
+    "merger": {
+      "label": "Fusão ou aquisição",
+      "keywords": ["aquisição", "aquisicao", "fusão", "fusao", "incorporação", "incorporacao", "joint venture", "venda de ativos", "cisão", "cisao"],
+      "direction": 0,
+      "intensity": 6,
+      "horizon_days": 180,
+      "certainty": 0.4,
+      "priced_in": 0.45,
+      "note": "O efeito depende do preço pago e das sinergias; o motor não presume sinal."
+    },
+    "results": {
+      "label": "Resultado trimestral",
+      "keywords": ["resultado do trimestre", "lucro acima", "lucro abaixo", "prejuízo", "prejuizo", "ebitda acima", "ebitda abaixo", "receita acima", "guidance"],
+      "direction": 0,
+      "intensity": 6,
+      "horizon_days": 60,
+      "certainty": 0.6,
+      "priced_in": 0.5,
+      "note": "Sinal depende da surpresa frente ao esperado; o motor não assume direção."
+    },
+    "rating_change": {
+      "label": "Mudança de rating ou recomendação",
+      "keywords": ["rebaixamento", "rebaixa", "eleva rating", "upgrade", "downgrade", "nota de crédito", "nota de credito", "risco soberano"],
+      "direction": 0,
+      "intensity": 5,
+      "horizon_days": 120,
+      "certainty": 0.5,
+      "priced_in": 0.4,
+      "note": "Direção depende do sentido da mudança, que precisa ser informado no evento."
+    },
+    "fx_shock": {
+      "label": "Choque cambial",
+      "keywords": ["dólar dispara", "dolar dispara", "dólar em alta", "dolar em alta", "câmbio dispara", "cambio dispara", "real se desvaloriza", "desvalorização do real", "desvalorizacao do real"],
+      "direction": 0,
+      "sectors": { "Mineração": 1, "Papel e celulose": 1, "Petróleo e gás": 1, "Bebidas e alimentos": 1, "Bens industriais": 1, "Varejo": -1, "Logística e transporte": -1, "Energia elétrica": -1 },
+      "intensity": 7,
+      "horizon_days": 120,
+      "certainty": 0.6,
+      "priced_in": 0.5,
+      "note": "Beneficia exportadoras e prejudica quem tem dívida ou custos em dólar."
+    }
+  }
+}

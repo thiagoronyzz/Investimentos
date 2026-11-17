@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "50mb" }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/api/.*", "dest": "app.py" },
+    { "src": "/(.+\\.(js|css|png|jpg|svg|ico|webmanifest))", "dest": "public/$1" },
+    { "src": "/.*", "dest": "public/index.html" }
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.11"
+  }
+}

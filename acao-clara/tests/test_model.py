@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import numpy as np
 import pandas as pd
-from app import features, calculate, split_indices, ranking_item, UserError
+from server_core import features, calculate, split_indices, ranking_item, UserError
 
 class ModelTests(unittest.TestCase):
     def fixture(self,n=1400):
@@ -28,7 +28,7 @@ class ModelTests(unittest.TestCase):
         df=self.fixture()
         df['date']=pd.bdate_range(end=datetime.now(ZoneInfo('America/Sao_Paulo')).date(),periods=len(df)).date
         expected=calculate(df,20)['probability']
-        with patch('app.history',return_value=(df,{})):
+        with patch('server_core.history',return_value=(df,{})):
             item=ranking_item({'symbol':'PETR4.SA','name':'PETR4'},20)
         self.assertIsNotNone(item)
         self.assertAlmostEqual(expected,item['probability'])
