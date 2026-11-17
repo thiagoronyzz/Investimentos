@@ -354,6 +354,20 @@
   function coreNotes(data) {
     const notes = [];
     (data.cores || []).forEach((core) => (core.notes || []).forEach((note) => notes.push(`${core.label}: ${note}`)));
+    // Auditoria do encolhimento: mostra quando um núcleo de regressão foi
+    // freado por falta de poder explicativo fora da amostra.
+    (data.cores || []).forEach((core) => {
+      const shrink = core.data && core.data.shrinkage;
+      if (!shrink || !isFinite(shrink.raw)) return;
+      const raw = shrink.raw * 100;
+      const final = shrink.final * 100;
+      if (Math.abs(raw - final) < 0.05) return;
+      const r2 = shrink.oos_r2 === null || shrink.oos_r2 === undefined ? 0 : shrink.oos_r2;
+      const reason = shrink.capped_at_sigma
+        ? `limitado a 1 desvio-padrão do horizonte (${num((shrink.horizon_sigma || 0) * 100, 2)}%)`
+        : `R² fora da amostra ${(r2 * 100).toFixed(1)}% → fator ${num(shrink.shrink_factor * 100, 0)}%`;
+      notes.push(`${core.label}: sinal bruto ${sign(raw)}${num(raw, 2)}% encolhido para ${sign(final)}${num(final, 2)}% (${reason}).`);
+    });
     (data.adjustments || []).forEach((item) => notes.push(`Camada C — ${item.step}: ${item.value_pp} p.p. (${item.detail})`));
     if (!notes.length) return null;
     return el('ul', { class: 'note-list' }, notes.map((note) => el('li', { text: note })));

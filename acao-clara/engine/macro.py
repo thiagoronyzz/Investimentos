@@ -107,11 +107,11 @@ def run(context: Context) -> CoreEstimate:
         return estimate
     design = frame.drop(columns=["_y"]).to_numpy()
     outcome = frame["_y"].to_numpy()
-    split = int(len(frame) * 0.7)
-    train = stats.ridge_regression(design[:split], outcome[:split], alpha=RIDGE_ALPHA)
+    train_end, test_start = stats.purged_split(len(frame), context.horizon_td)
+    train = stats.ridge_regression(design[:train_end], outcome[:train_end], alpha=RIDGE_ALPHA)
     if not train["ok"]:
         return CoreEstimate.skipped("macro", estimate.label, "Regressão macro não pôde ser estimada.")
-    r2_oos = stats.out_of_sample_r2(train["model"], design[split:], outcome[split:])
+    r2_oos = stats.out_of_sample_r2(train["model"], design[test_start:], outcome[test_start:])
     full = stats.ridge_regression(design, outcome, alpha=RIDGE_ALPHA)
     coefficients = np.asarray(full["model"][-1].coef_, dtype=float)   # já padronizados
     intercept = float(full["intercept"])
@@ -119,7 +119,11 @@ def run(context: Context) -> CoreEstimate:
     last_row = features.iloc[-1].to_numpy(dtype=float)[None, :]
     standardized = np.clip(full["model"][0].transform(last_row)[0], -4.0, 4.0)
     contributions = coefficients * standardized
-    expected = float(np.clip(np.nansum(contributions), -0.9, 3.0))
+    raw_expected = float(np.nansum(contributions))
+    # Encolhe pelo R² fora da amostra e limita a 1 desvio-padrão do horizonte.
+    horizon_sigma = float(np.nanstd(outcome))
+    expected, shrink_detail = stats.shrink_forecast(raw_expected, float(r2_oos), horizon_sigma)
+    estimate.data["shrinkage"] = shrink_detail
     labels = {}
     for key in usable_keys:
         if key in state:

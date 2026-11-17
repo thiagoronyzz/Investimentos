@@ -70,6 +70,48 @@ class StatisticsTests(unittest.TestCase):
         self.assertTrue(np.isfinite(ar["cumulative_return"]))
         self.assertEqual(len(ar["path"]), 60)
 
+    def test_purged_split_leaves_a_gap_of_at_least_the_horizon(self):
+        """O teste não pode começar antes de o rótulo do treino vencer."""
+        for n, horizon in ((1200, 5), (1200, 21), (1200, 62), (1200, 252), (900, 252)):
+            train_end, test_start = stats.purged_split(n, horizon)
+            self.assertGreaterEqual(test_start - train_end, horizon, f"n={n} h={horizon}")
+            self.assertGreater(n - test_start, 0, f"n={n} h={horizon}")
+            self.assertGreater(train_end, 0)
+
+    def test_purged_split_falls_back_when_history_is_short(self):
+        """Com histórico curto a purga é reduzida, mas treino e teste sobrevivem."""
+        train_end, test_start = stats.purged_split(300, 252)
+        self.assertLess(test_start, 300)
+        self.assertGreater(train_end, 0)
+        self.assertGreater(test_start, train_end)
+        self.assertEqual(stats.purged_split(30, 62), (30, 30))
+
+    def test_shrink_forecast_dampens_models_without_out_of_sample_skill(self):
+        value, detail = stats.shrink_forecast(-0.40, 0.0, 0.30)
+        self.assertAlmostEqual(value, -0.10, places=6)
+        self.assertTrue(detail["capped_at_sigma"] is False)
+        self.assertAlmostEqual(detail["shrink_factor"], 0.25, places=6)
+
+    def test_shrink_forecast_keeps_skilled_models_and_caps_at_one_sigma(self):
+        value, detail = stats.shrink_forecast(0.20, 1.0, 0.30)
+        self.assertAlmostEqual(value, 0.20, places=6)
+        self.assertAlmostEqual(detail["shrink_factor"], 1.0, places=6)
+        capped, detail = stats.shrink_forecast(1.20, 1.0, 0.30)
+        self.assertAlmostEqual(capped, 0.30, places=6)
+        self.assertTrue(detail["capped_at_sigma"])
+
+    def test_regression_cores_report_their_shrinkage(self):
+        """Macro, interdependência e fluxo publicam o encolhimento aplicado."""
+        context, _ = report.build_context(DATA, "PETR4.SA", 365)
+        for core in (macro, interdependence):
+            estimate = core.run(context)
+            if estimate.status != "ok":
+                continue
+            detail = estimate.data.get("shrinkage")
+            self.assertIsNotNone(detail, core.__name__)
+            self.assertLessEqual(abs(detail["final"]), abs(detail["raw"]) + 1e-12, core.__name__)
+            self.assertLessEqual(abs(estimate.expected_return), 1.0, core.__name__)
+
     def test_monte_carlo_distribution_is_consistent(self):
         result = stats.monte_carlo(0.0002, 0.02, 60, paths=2000, seed=5)
         self.assertTrue(0.0 <= result["p_up"] <= 1.0)

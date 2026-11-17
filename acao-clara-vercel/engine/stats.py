@@ -420,6 +420,75 @@ def ridge_regression(x: np.ndarray, y: np.ndarray, alpha: float = 10.0) -> dict:
     }
 
 
+def shrink_forecast(raw: float, oos_r2: float, horizon_sigma: float, floor: float = 0.25) -> tuple[float, dict]:
+    """Encolhe a previsão de uma regressão pelo seu desempenho fora da amostra.
+
+    Duas defesas contra regressão espúria:
+
+    1. **Encolhimento por habilidade** — o sinal é multiplicado por
+       ``floor + (1 - floor) · max(0, R² fora da amostra)``. Um modelo sem
+       poder explicativo real conserva apenas o piso, em vez de empurrar a
+       projeção com toda a força do ajuste dentro da amostra.
+    2. **Teto econômico** — nenhuma condição isolada justifica, sozinha, um
+       movimento maior que um desvio-padrão do retorno do próprio horizonte.
+
+    Retorna o valor ajustado e o detalhe da transformação (para auditoria).
+    """
+    skill = float(np.clip(oos_r2, 0.0, 1.0)) if np.isfinite(oos_r2) else 0.0
+    factor = floor + (1.0 - floor) * skill
+    shrunk = float(raw) * factor
+    sigma = float(horizon_sigma) if np.isfinite(horizon_sigma) and horizon_sigma > 0 else float("nan")
+    capped = shrunk
+    cap_hit = False
+    if np.isfinite(sigma):
+        capped = float(np.clip(shrunk, -sigma, sigma))
+        cap_hit = abs(capped - shrunk) > 1e-12
+    if not np.isfinite(capped):
+        capped = 0.0
+    return capped, {
+        "raw": float(raw),
+        "oos_r2": skill,
+        "shrink_factor": round(factor, 4),
+        "shrunk": shrunk,
+        "horizon_sigma": sigma if np.isfinite(sigma) else None,
+        "capped_at_sigma": cap_hit,
+        "final": capped,
+    }
+
+
+def purged_split(n: int, horizon: int, train_ratio: float = 0.7) -> tuple[int, int]:
+    """Divisão cronológica treino/teste **com purga** entre os blocos.
+
+    Quando o rótulo é o retorno dos próximos `horizon` pregões, os últimos
+    `horizon` exemplos do treino têm rótulos que se sobrepõem no tempo ao
+    período de teste. Sem purga, o "fora da amostra" vaza informação do treino
+    e o R² fica otimista — e é justamente esse R² que alimenta os pesos
+    dinâmicos da Camada B e a confiança dos núcleos.
+
+    Retorna `(fim_do_treino, inicio_do_teste)`: treine com `[:fim]` e teste com
+    `[inicio:]`. O intervalo entre eles fica vazio de propósito.
+    """
+    n = int(n)
+    horizon = max(0, int(horizon))
+    if n < 40:
+        return n, n
+    min_test = max(20, int(n * 0.10))
+    min_train = max(20, int(n * 0.30))
+    train_end = int(n * train_ratio)
+    # 1) A purga completa cabe sem sacrificar o teste: caso ideal.
+    if n - (train_end + horizon) >= min_test:
+        return train_end, train_end + horizon
+    # 2) Cabe purga completa, mas é preciso recuar o treino.
+    candidate = n - min_test - horizon
+    if candidate >= min_train:
+        return candidate, candidate + horizon
+    # 3) Não há espaço para a purga completa: reduz o quanto der, mantendo
+    #    treino e teste mínimos (horizontes longos com histórico curto).
+    test_start = n - min_test
+    train_end = max(min_train, test_start - horizon)
+    return min(train_end, test_start - 1), test_start
+
+
 def out_of_sample_r2(model, x: np.ndarray, y: np.ndarray) -> float:
     frame = pd.DataFrame(x)
     frame["_y"] = y

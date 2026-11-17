@@ -64,7 +64,7 @@ def scan(context: Context, max_candidates: int = config.DISCOVERY_MAX_CANDIDATES
                     "pvalue": float(pvalue),
                     "n": int(n),
                     "stability": stats.correlation_stability(target, shifted),
-                    "oos_r2": _oos_r2(target, shifted),
+                    "oos_r2": _oos_r2(target, shifted, context.horizon_td),
                 }
             )
     if not rows:
@@ -107,15 +107,17 @@ def _shift(values: np.ndarray, lag: int) -> np.ndarray:
     return out
 
 
-def _oos_r2(target: np.ndarray, values: np.ndarray) -> float:
+def _oos_r2(target: np.ndarray, values: np.ndarray, horizon: int = 0) -> float:
     frame = pd.DataFrame({"x": values, "y": target}).dropna()
     if len(frame) < 100:
         return float("nan")
-    split = int(len(frame) * 0.7)
-    train = stats.ridge_regression(frame.x.to_numpy()[:split, None], frame.y.to_numpy()[:split], alpha=5.0)
+    train_end, test_start = stats.purged_split(len(frame), horizon)
+    train = stats.ridge_regression(frame.x.to_numpy()[:train_end, None], frame.y.to_numpy()[:train_end], alpha=5.0)
     if not train.get("ok"):
         return float("nan")
-    return stats.out_of_sample_r2(train["model"], frame.x.to_numpy()[split:, None], frame.y.to_numpy()[split:])
+    return stats.out_of_sample_r2(
+        train["model"], frame.x.to_numpy()[test_start:, None], frame.y.to_numpy()[test_start:]
+    )
 
 
 def suggested_additions(context: Context, discoveries: list[dict], limit: int = 3) -> list[str]:

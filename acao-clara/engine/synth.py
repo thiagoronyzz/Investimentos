@@ -128,8 +128,17 @@ def _build() -> dict:
     ipca_daily = step_series(ipca, monthly_dates)
     pib_daily = step_series(pib, quarterly_dates)
 
-    def price_from_returns(returns: np.ndarray, start: float) -> np.ndarray:
-        return start * np.exp(np.cumsum(returns))
+    def price_from_returns(returns: np.ndarray, anchor: float) -> np.ndarray:
+        """Caminho de preços que **termina** no valor de referência.
+
+        Ancorar no começo fazia o preço atual acumular toda a deriva de dez anos
+        de histórico (PETR4 fechava em R$ 99,87 com alvo de R$ 34,00; ELET6 em
+        R$ 365 com alvo de R$ 44). Ancorar no fim preserva exatamente os mesmos
+        retornos diários — e portanto volatilidade, correlações e betas — e só
+        desloca o nível, mantendo o preço corrente realista.
+        """
+        cumulative = np.cumsum(returns)
+        return anchor * np.exp(cumulative - cumulative[-1])
 
     stocks: dict[str, dict] = {}
     for symbol, spec in _SPECS.items():

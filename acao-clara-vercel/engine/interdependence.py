@@ -225,9 +225,13 @@ def run(context: Context) -> CoreEstimate:
         return estimate
     design = frame.drop(columns=["_y"]).to_numpy()
     outcome = frame["_y"].to_numpy()
-    split = int(len(frame) * 0.7)
-    train = stats.ridge_regression(design[:split], outcome[:split], alpha=RIDGE_ALPHA)
-    r2_oos = stats.out_of_sample_r2(train["model"], design[split:], outcome[split:]) if train.get("ok") else float("nan")
+    train_end, test_start = stats.purged_split(len(frame), context.horizon_td)
+    train = stats.ridge_regression(design[:train_end], outcome[:train_end], alpha=RIDGE_ALPHA)
+    r2_oos = (
+        stats.out_of_sample_r2(train["model"], design[test_start:], outcome[test_start:])
+        if train.get("ok")
+        else float("nan")
+    )
     full = stats.ridge_regression(design, outcome, alpha=RIDGE_ALPHA)
     if not full.get("ok"):
         return CoreEstimate.skipped("interdependence", estimate.label, "Regressão multivariada não pôde ser estimada.")
@@ -243,7 +247,11 @@ def run(context: Context) -> CoreEstimate:
         contributions[key] = beta * float(move.get("expected_pct", 0.0))
         matrix[key]["beta"] = round(beta, 5)
         matrix[key]["contribution_pp"] = round(contributions[key] * 100, 3)
-    expected = float(np.clip(sum(contributions.values()), -0.9, 3.0))
+    raw_expected = float(sum(contributions.values()))
+    expected, shrink_detail = stats.shrink_forecast(
+        raw_expected, float(r2_oos) if np.isfinite(r2_oos) else 0.0, float(np.nanstd(outcome))
+    )
+    estimate.data["shrinkage"] = shrink_detail
     for key, value in contributions.items():
         move = matrix[key]["expected_move"]
         estimate.add_signal(
